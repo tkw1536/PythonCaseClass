@@ -17,5 +17,5 @@ class LeafNode(Tree):
 
 
 if __name__ == "__main__":
-    tree = InternalNode(LeafNode(1), LeafNode(2), LeafNode(3))
+    tree = InternalNode(LeafNode[1], LeafNode[2], LeafNode[3])
     print(LeafNode(1) is LeafNode(1))

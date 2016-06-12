@@ -112,6 +112,27 @@ class CaseClassMeta(type):
         # and return it
         return instance
 
+    def __getitem__(cls, item):
+        """ Syntactic sugar to create new CaseClass instances.
+
+        :param item: Tuple representing parameters or slice instance.
+        :type item: Any
+
+        :rtype: CaseClass
+        """
+
+        # allow CaseClass[:] to create a new CaseClass()
+        if isinstance(item, slice):
+            if item.start is None and item.stop is None and item.step is None:
+                return CaseClassMeta.__call__(cls)
+
+        # if we get a single item, it needs to be turned into a tuple.
+        elif not isinstance(item, tuple):
+            item = (item, )
+
+        # finally just do the same as in call.
+        return CaseClassMeta.__call__(cls, *item)
+
     @staticmethod
     def get_hash(cc):
         """ Gets a hash for a CaseClass or None.
@@ -256,7 +277,7 @@ class CaseClass(CaseClassBase):
         a_repr = ",".join(a_list+kwarg_list)
 
         # and put them after the name of the class
-        return "%s(%s)" % (self.__name, a_repr)
+        return "%s[%s]" % (self.__name, a_repr)
 
 
 @add_metaclass(AbstractCaseClassMeta)
