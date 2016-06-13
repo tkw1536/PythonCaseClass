@@ -1,5 +1,79 @@
-from six import add_metaclass
+"""
+CaseClass.py - Scala-like CaseClasses for Python
 
+Copyright (c) 2016 Tom Wiesing
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+
+#
+# UTILITIES
+#
+
+
+def _add_metaclass(meta):
+    """Class decorator for creating a class with a metaclass. Adapted from the
+    six library which is licensed as follows:
+
+Copyright (c) 2010-2015 Benjamin Peterson
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+    """
+
+    def wrapper(cls):
+        org_cls = cls.__dict__.copy()
+        slots = org_cls.get('__slots__')
+
+        if slots is not None:
+            if isinstance(slots, str):
+                slots = [slots]
+            for slots_var in slots:
+                org_cls.pop(slots_var)
+
+        org_cls.pop('__dict__', None)
+        org_cls.pop('__weakref__', None)
+
+        return meta(cls.__name__, cls.__bases__, org_cls)
+
+    return wrapper
+
+
+
+#
+# Meta-classes for the case class
+#
 
 class CaseClassMeta(type):
     """ Meta-Class for case classes. """
@@ -22,7 +96,7 @@ class CaseClassMeta(type):
         """
 
         # skip the CaseClass and AbstractCaseClass
-        if CaseClassBase in bases:
+        if _CaseClass in bases:
             return super(CaseClassMeta, mcs).__new__(mcs, name, bases, attrs)
 
         # no case-to-case inheritance
@@ -48,7 +122,6 @@ class CaseClassMeta(type):
         # instantiated and (2) calls the old_init function.
 
         def __init__(self, *args, **kwargs):
-
             CaseClass.__case_class_init__(self, *args, **kwargs)
 
             return old_init(self, *args, **kwargs)
@@ -78,9 +151,9 @@ class CaseClassMeta(type):
             raise TypeError("Cannot instantiate AbstractCaseClass %s"
                             % (cls.__name__, ))
 
-        if CaseClassBase in cls.__bases__:
+        if _CaseClass in cls.__bases__:
             raise TypeError("Cannot instantiate %s: Classes inheriting "
-                            "directly from CaseClassBase may not be "
+                            "directly from _CaseClass may not be "
                             "instantiated. " % cls.__name__)
 
         # make sure we have the dictionary
@@ -209,14 +282,19 @@ class AbstractCaseClassMeta(CaseClassMeta):
         return super(AbstractCaseClassMeta, cls).__call__(*args, **kwargs)
 
 
-class CaseClassBase(object):
-    """ Internal base class for CaseClasses.  """
+class _CaseClass(object):
+    """ A class used as base for all CaseClasses"""
+
     pass
 
 
-@add_metaclass(CaseClassMeta)
-class CaseClass(CaseClassBase):
-    """ Super-class used for all case classes. """
+#
+# Actual CaseClass
+#
+
+@_add_metaclass(CaseClassMeta)
+class CaseClass(_CaseClass):
+    """ Represents a normal CaseClass. """
 
     def __case_class_init__(self, *args, **kwargs):
         """ Initialises case class parameters.
@@ -248,10 +326,10 @@ class CaseClass(CaseClassBase):
     def case_args(self):
         """ Returns the arguments originally given to this CaseClass.
 
-        :rtype: list
+        :rtype: CaseArguments
         """
 
-        return list(self.__args)
+        return CaseArguments(self.__args)
 
     @property
     def case_kwargs(self):
@@ -260,7 +338,7 @@ class CaseClass(CaseClassBase):
         :rtype: dict
         """
 
-        return self.__kwargs
+        return CaseKeywordArguments(self.__kwargs)
 
     def __repr__(self):
         """ Implements a representation for Case classes. This is given by the
@@ -280,14 +358,69 @@ class CaseClass(CaseClassBase):
         return "%s[%s]" % (self.__name, a_repr)
 
 
-@add_metaclass(AbstractCaseClassMeta)
-class AbstractCaseClass(CaseClass, CaseClassBase):
+@_add_metaclass(AbstractCaseClassMeta)
+class AbstractCaseClass(CaseClass, _CaseClass):
     """ Represents a non-instatiable abstract case class. """
 
     pass
 
 
-class InheritableCaseClass(CaseClass, CaseClassBase):
+class InheritableCaseClass(CaseClass, _CaseClass):
     """ Represent a caseClass that may be inherited from. """
 
     pass
+
+
+#
+# ACTUAL CASECLASSES for the arguments
+#
+class CaseArguments(CaseClass, list):
+    """ Represents arguments given to a CaseClass. """
+
+    def __init__(self, args):
+        """ Creates a new CaseArguments() instance.
+
+        :param args: Arguments to wrap
+        :type args: list
+        """
+
+        super(CaseArguments, self).__init__(args)
+
+    def __setitem__(self, key, value):
+        """ Sets an item of this CaseArguments() instance.
+
+        :param key: Key of item to set
+        :param value: Value to set key to.
+        """
+
+        raise TypeError
+
+    def __setslice__(self, i, j, sequence):
+        """ Sets a slice of this CaseArguments() instance.
+
+        :param i: Index to start setting at
+        :param j: Index to stop setting at:
+        :param sequence: Sequence representing newly set values.
+        """
+
+        raise TypeError
+
+
+class CaseKeywordArguments(CaseClass, dict):
+    def __init__(self, kwargs):
+        """ Creates a new CaseKeywordArguments() instance.
+
+        :param kwargs: Keyword Arguments to wrap
+        :type kwargs: dict
+        """
+
+        super(CaseKeywordArguments, self).__init__(kwargs)
+
+    def __setitem__(self, key, value):
+        """ Sets an item of this CaseKeywordArguments() instance.
+
+        :param key: Key of item to set
+        :param value: Value to set key to.
+        """
+
+        raise TypeError
