@@ -1,8 +1,8 @@
-from CaseClass import AbstractCaseClass, CaseClass, InheritableCaseClass
+from case_class import AbstractCaseClass
 
 
 class Tree(AbstractCaseClass):
-    def __init__(self, value=None, *children):
+    def __init__(self, value, *children):
         self.value = value
         self.children = children
 
@@ -17,5 +17,5 @@ class LeafNode(Tree):
 
 
 if __name__ == "__main__":
-    tree = InternalNode(LeafNode[1], LeafNode[2], LeafNode[3])
+    tree = InternalNode(1, LeafNode[1], LeafNode[2], LeafNode[3])
     print(tree)
