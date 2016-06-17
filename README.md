@@ -21,8 +21,8 @@ Zero-dependency scala-like case classes for Python 2 + 3.
 ## Install
 
 This package is published on the
-[the Python Package Index](https://pypi.python.org/case_class). Installation can
-be done simply via pip:
+[the Python Package Index](https://pypi.python.org/pypi/case_class).
+Installation can be done simply via pip:
 
 ```bash
 pip install case_class
