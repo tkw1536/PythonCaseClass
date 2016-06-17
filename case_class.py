@@ -76,16 +76,9 @@ class _Utilities(object):
             # try with get full argspec
             (pa, van, kwvan, pdef, kwonly, kwdef, annots) \
                 = inspect.getfullargspec(f)
-        except AttributeError:
 
-            try:
-                # try the regular one
-                (pa, van, kwvan, pdef) = inspect.getargspec(f)
-                annots = {}
-                kwonly = {}
-                kwdef = {}
-            except TypeError:
-                # hard-code the defaults for the old case
+        # work around <slot_wrapper> objects by giving a sensible defaults
+        except TypeError:
                 (pa, van, kwvan, pdef, kwonly, kwdef, annots) = (
                     ['self'],
                     None,
@@ -96,6 +89,27 @@ class _Utilities(object):
                     {}
                 )
 
+        # in case there is getfullargspec
+        except AttributeError:
+
+            try:
+                # try the regular one
+                (pa, van, kwvan, pdef) = inspect.getargspec(f)
+                annots = {}
+                kwonly = {}
+                kwdef = {}
+
+            # work around <slot_wrapper> objects by giving a sensible defaults
+            except TypeError:
+                (pa, van, kwvan, pdef, kwonly, kwdef, annots) = (
+                    ['self'],
+                    None,
+                    None,
+                    [],
+                    {},
+                    {},
+                    {}
+                )
 
 
         # STEP 2: Merge the defaults
