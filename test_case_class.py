@@ -124,12 +124,12 @@ class TestUtilities(TestCase):
         class Test2(Test):
             pass
 
-        self.assertIs(
-            _Utilities.get_method('f', Test2.__dict__, Test2.__bases__),
+        self.assertTrue(
+            _Utilities.get_method('f', Test2.__dict__, Test2.__bases__) is
             Test.__dict__['f'], 'get method of superclass')
 
-        self.assertIs(
-            _Utilities.get_method('f', Test.__dict__, Test.__bases__),
+        self.assertTrue(
+            _Utilities.get_method('f', Test.__dict__, Test.__bases__) is
             Test.__dict__['f'], 'get method of class')
 
 
@@ -153,9 +153,9 @@ class TestCaseClass(TestCase):
             def __init__(self, a, b, c):
                 pass
 
-        self.assertIsNotNone(Test(), 'instantiate zero-argument CaseClass')
-        self.assertIsNotNone(MoreTest(1, 2, 3), 'instantiate CaseClass with'
-                                                'arguments')
+        self.assertFalse(Test() is None, 'instantiate zero-argument CaseClass')
+        self.assertFalse(MoreTest(1, 2, 3) is None, 'instantiate CaseClass '
+                                                    'with arguments')
 
     def test___repr__(self):
         """ Tests that repr() calls work as expected. """
@@ -182,8 +182,8 @@ class TestCaseClass(TestCase):
         inst_one_b = Test(1)
         inst_two = Test(2)
 
-        self.assertIs(inst_one_a, inst_one_b, 'referential equality')
-        self.assertIsNot(inst_one_b, inst_two, 'referential inequality')
+        self.assertTrue(inst_one_a is inst_one_b, 'referential equality')
+        self.assertTrue(inst_one_b is not inst_two, 'referential inequality')
 
     def test___eq__(self):
         """ Tests that CaseClass instances are equal when
@@ -249,8 +249,9 @@ class TestAbstractCaseClass(TestCase):
 
         inst = InternalNode(1, LeafNode(1), LeafNode(2), LeafNode(3))
         self.assertEqual(repr(inst),
-         'InternalNode(1, *children=(LeafNode(1), LeafNode(2), LeafNode(3)))',
-                         'instantiating subclass of AbstractCaseClass')
+                         'InternalNode(1, *children=(LeafNode(1), LeafNode(2), '
+                         'LeafNode(3)))', 'instantiating subclass of '
+                                          'AbstractCaseClass')
 
 
 class TestInheritableCaseClass(TestCase):
@@ -291,8 +292,9 @@ class TestInheritableCaseClass(TestCase):
 
         inst = InternalNode(1, LeafNode(1), LeafNode(2), LeafNode(3))
         self.assertEqual(repr(inst),
-         'InternalNode(1, *children=(LeafNode(1), LeafNode(2), LeafNode(3)))',
-                         'instantiating subclass of InheritableCaseClass')
+                         'InternalNode(1, *children=(LeafNode(1), LeafNode(2), '
+                         'LeafNode(3)))', 'instantiating subclass of '
+                                          'InheritableCaseClass')
 
 if __name__ == '__main__':
     main()
