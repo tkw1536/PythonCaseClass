@@ -1,4 +1,5 @@
 # PythonCaseClass
+[![Build Status](https://travis-ci.org/tkw1536/PythonCaseClass.svg?branch=master)](https://travis-ci.org/tkw1536/PythonCaseClass)
 
 Zero-dependency scala-like case classes for Python 2 + 3.
 
