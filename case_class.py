@@ -77,11 +77,26 @@ class _Utilities(object):
             (pa, van, kwvan, pdef, kwonly, kwdef, annots) \
                 = inspect.getfullargspec(f)
         except AttributeError:
-            # fallback to the regular one
-            (pa, van, kwvan, pdef) = inspect.getargspec(f)
-            annots = {}
-            kwonly = {}
-            kwdef = {}
+
+            try:
+                # try the regular one
+                (pa, van, kwvan, pdef) = inspect.getargspec(f)
+                annots = {}
+                kwonly = {}
+                kwdef = {}
+            except TypeError:
+                # hard-code the defaults for the old case
+                (pa, van, kwvan, pdef, kwonly, kwdef, annots) = (
+                    ['self'],
+                    None,
+                    None,
+                    [],
+                    {},
+                    {},
+                    {}
+                )
+
+
 
         # STEP 2: Merge the defaults
         defaults = kwdef.copy() if kwdef is not None else {}
@@ -307,10 +322,12 @@ class _Utilities(object):
         if name in attrs:
             return attrs[name]
 
-        # Look through the bases one by one to try and find the attribute.
+        # Try to find the method one by one
         for b in bases:
-            if hasattr(b, name):
-                return getattr(b, name)
+            sub_method = _Utilities.get_method(name, b.__dict__, b.__bases__)
+
+            if sub_method is not None:
+                return sub_method
 
         # else return None
         return None

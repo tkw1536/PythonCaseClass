@@ -126,11 +126,11 @@ class TestUtilities(TestCase):
 
         self.assertIs(
             _Utilities.get_method('f', Test2.__dict__, Test2.__bases__),
-            Test.f, 'get method of superclass')
+            Test.__dict__['f'], 'get method of superclass')
 
         self.assertIs(
             _Utilities.get_method('f', Test.__dict__, Test.__bases__),
-            Test.f, 'get method of class')
+            Test.__dict__['f'], 'get method of class')
 
 
 class TestCaseClass(TestCase):
