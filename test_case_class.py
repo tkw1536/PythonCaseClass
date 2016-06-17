@@ -140,8 +140,7 @@ class TestCaseClass(TestCase):
         """ Tests that the CaseClass class can not be
         instantiated directly. """
 
-        with self.assertRaises(NotInstantiableClassException):
-            CaseClass()
+        self.assertRaises(NotInstantiableClassException, CaseClass)
 
     def test___init__(self):
         """ Tests that CaseClass subclasses can be instantiated. """
@@ -203,12 +202,14 @@ class TestCaseClass(TestCase):
     def test_no_inheritance(self):
         """ Tests that case-to-case inheritance is disabled by default. """
 
-        with self.assertRaises(NoCaseToCaseInheritanceException):
+        def code():
             class Test(CaseClass):
                 pass
 
             class Failure(Test):
                 pass
+
+        self.assertRaises(NoCaseToCaseInheritanceException, code)
 
 
 class TestAbstractCaseClass(TestCase):
@@ -218,19 +219,20 @@ class TestAbstractCaseClass(TestCase):
         """ Tests that the AbstractCaseClass class can not be
         instantiated directly. """
 
-        with self.assertRaises(NotInstantiableClassException):
-            AbstractCaseClass()
+        self.assertRaises(NotInstantiableClassException, AbstractCaseClass)
 
     def test___init__(self):
         """ Tests that AbstractCaseClass instances can not be instantiated. """
 
-        class Tree(AbstractCaseClass):
-            def __init__(self, value, *children):
-                self.value = value
-                self.children = children
+        def code():
+            class Tree(AbstractCaseClass):
+                def __init__(self, value, *children):
+                    self.value = value
+                    self.children = children
 
-        with self.assertRaises(NotInstantiableAbstractCaseClassException):
             Tree(1, 2, 3)
+
+        self.assertRaises(NotInstantiableAbstractCaseClassException, code)
 
     def test_inheritance(self):
         """ Tests that AbstractCaseClass subclasses can be instantiated. """
@@ -258,8 +260,10 @@ class TestInheritableCaseClass(TestCase):
     """ Tests for the InheritableCaseClass class. """
 
     def test_no_direct(self):
-        with self.assertRaises(NotInstantiableClassException):
-            InheritableCaseClass()
+        """ Tests that the InheritableCaseClass class can not be
+            instantiated directly. """
+
+        self.assertRaises(NotInstantiableClassException, InheritableCaseClass)
 
     def test___init__(self):
         """ Tests that InheritableCaseClass instances can be instantiated. """
