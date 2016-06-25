@@ -7,7 +7,7 @@ def read(fname):
 
 setup(
     name="case_class",
-    version="0.0.2",
+    version="0.0.3",
 
     url="https://github.com/tkw1536/PythonCaseClass",
     author="Tom Wiesing",
@@ -16,7 +16,7 @@ setup(
     py_modules=['case_class'],
 
     description=("Scala-like CaseClasses for Python"),
-    long_description=read('README.md'),
+    long_description=read('README.rst'),
 
     license="MIT",
 
