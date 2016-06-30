@@ -393,59 +393,13 @@ class CaseClassMeta(type):
         :rtype: CaseClassMeta
         """
 
-        # skip the CaseClass and AbstractCaseClass
-        if _CaseClass in bases:
-            return super(CaseClassMeta, mcs).__new__(mcs, name, bases, attrs)
-
-        # no case-to-case inheritance
-        if CaseClassMeta.inherits_from_case_class(bases):
+        # no case-to-case inheritance outside of the base classes
+        if _CaseClass not in bases and \
+                CaseClassMeta.inherits_from_case_class(bases):
             raise NoCaseToCaseInheritanceException(name)
 
-        # store the reference to the old __init__ class in a variable old_init
-
-        old_init = _Utilities.get_method("__init__", attrs, bases)
-
-        # Extract the old signature
-        initsig = _Utilities.get_signature(old_init)
-
-        # Define a new __init__ function that (1) makes sure the cc is
-        # instantiated and (2) calls the old_init function.
-        @_Utilities.with_signature('__init__', initsig)
-        def __init__(self, *args, **kwargs):
-
-            # check if we should run the CaseClass init
-            should_run_cc_init = True
-
-            # by checking if this instance is currently initialising
-            for instance in CaseClassMeta.instance_list:
-                if instance is self:
-                    should_run_cc_init = False
-
-            # add ourselves and block future cc inits
-            idx = len(CaseClassMeta.instance_list)
-            CaseClassMeta.instance_list.append(self)
-
-            # run cc init if we should
-            if should_run_cc_init:
-                CaseClass.__case_class_init__(self, initsig, *args, **kwargs)
-
-            # Run the old init
-            val = old_init(self, *args, **kwargs)
-
-            # and we are no longer and remove ourselves from the block list
-            CaseClassMeta.instance_list.pop(idx)
-
-            # return the inited value
-            return val
-
-        # set that as the __init__
-        attrs["__init__"] = __init__
-
-        # create the class
-        cls = super(CaseClassMeta, mcs).__new__(mcs, name, bases, attrs)
-
-        # and return it
-        return cls
+        # now we can just create it normally.
+        return super(CaseClassMeta, mcs).__new__(mcs, name, bases, attrs)
 
     def __call__(cls, *args, **kwargs):
         """ Creates a new CaseClass() instance.
@@ -587,30 +541,46 @@ class _CaseClass(object):
 class CaseClass(_CaseClass):
     """ Represents a normal CaseClass. """
 
-    def __case_class_init__(self, init_sig, *args, **kwargs):
-        """ Initialises case class parameters.
-
-        :param init_sig: Signature of the original __init__ function
-        :type init_sig: tuple
+    def __new__(cls, *args, **kwargs):
+        """ Creates a new CaseClass instance.
 
         :param args: Parameters for this CaseClass instance.
         :type args: list
 
         :param kwargs: Keyword Arguments for this CaseClass instance.
         :type kwargs: dict
+
+        :rtype: CaseClass
         """
 
+        # create a new instance
+        inst = super(CaseClass, cls).__new__(cls)
+
+        print("New()")
+
+        init = _Utilities.get_method("__init__", inst.__class__.__dict__,
+                              inst.__class__.__bases__)
+
+        # to allow better singleton
+        if init is object.__init__:
+            init = lambda self: None
+
+        init_sig = _Utilities.get_signature(init)
+
         # Name of the class
-        self.__name = self.__class__.__name__
+        inst.__name = inst.__class__.__name__
 
         # The signature of the original function
-        self.__init_sig = init_sig
+        inst.__init_sig = init_sig
 
         # The arguments given to this case class
-        self.__args = list(args)
+        inst.__args = list(args)
 
         # The keyword arguments given to this case class
-        self.__kwargs = kwargs
+        inst.__kwargs = kwargs
+
+        # and return the instance
+        return inst
 
     def __hash__(self):
         """ Returns a hash representing this case class.

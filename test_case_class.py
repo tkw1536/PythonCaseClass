@@ -169,6 +169,14 @@ class TestCaseClass(TestCase):
                          "Test(1, y=2, *args=(), **kwargs={'key': 'value'})",
                          'representation of a CaseClass')
 
+        class Singleton(CaseClass):
+            pass
+
+        s = Singleton()
+
+        self.assertEqual(repr(s), 'Singleton()',
+                         'representation of a singleton')
+
     def test_reference(self):
         """ Tests that CaseClass instances are referentially equal when
         expected. """
@@ -299,6 +307,31 @@ class TestInheritableCaseClass(TestCase):
                          'InternalNode(1, *children=(LeafNode(1), LeafNode(2), '
                          'LeafNode(3)))', 'instantiating subclass of '
                                           'InheritableCaseClass')
+
+    def test_multiple_inheritance(self):
+        """ Tests that Multiple Inheritance works as expected. """
+
+        class Foo(AbstractCaseClass):
+            pass
+
+        class Bar(Foo):
+            pass
+
+        class Baz(AbstractCaseClass):
+            def __init__(self):
+                self.test_p1 = True
+
+        class Xyz(Foo, Baz):
+            def __init__(self):
+                super(Xyz, self).__init__()
+                print(self)
+                self.test_p2 = True
+
+        xyz = Xyz()
+
+        self.assertTrue(xyz.test_p1 and xyz.test_p2,
+                        "multiple-inheritance works with super()")
+
 
 if __name__ == '__main__':
     main()

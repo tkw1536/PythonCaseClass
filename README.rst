@@ -14,11 +14,13 @@ Features
 * Simple usage: Just inherit from ``case_class.CaseClass``
 * Simple Installation: Zero dependencies
 * plays well with inheritance
-    * ``CaseClass`` usable as a Mix-In
+    * ``CaseClass`` and `AbstractCaseClass`` usable as a Mix-In
     * Case-to-case inheritance forbidden by default
         * use ``AbstractCaseClass`` to allow only subclasses to be instantiated
         * use ``InheritableCaseClass`` to override allow both super and
-          subclasses to be instantiated.
+          subclasses to be instantiated.`
+    * also plays well with Multiple Inheritance
+      * ``super()`` calls still work as expected
 * equality based on arguments
     * calls constructor only once per combination of arguments
     * works with ``==`` operator and ``is`` (referential equality) operator.
