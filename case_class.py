@@ -556,8 +556,6 @@ class CaseClass(_CaseClass):
         # create a new instance
         inst = super(CaseClass, cls).__new__(cls)
 
-        print("New()")
-
         init = _Utilities.get_method("__init__", inst.__class__.__dict__,
                               inst.__class__.__bases__)
 
