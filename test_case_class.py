@@ -41,10 +41,30 @@ class TestUtilities(TestCase):
             {'name': 'kwargs', 'type': _Utilities.VAR_KW}
         ],
         {
-            'kwargs': (_Utilities.VAR_KW, ['x', 'y']),
-            'args': (_Utilities.VAR_POS, 2),
-            'x': (_Utilities.ARGUMENT_POS, 0),
-            'y': (_Utilities.ARGUMENT_POS, 1)
+            'kwargs': (_Utilities.VAR_KW, ['x', 'y'], None),
+            'args': (_Utilities.VAR_POS, 2, None),
+            'x': (_Utilities.ARGUMENT_POS, 0, None),
+            'y': (_Utilities.ARGUMENT_POS, 1, 1)
+        }
+    )
+
+    empty_signature = (
+        [
+            {'name': 'self', 'type': _Utilities.ARGUMENT_POS}
+        ],
+        {
+            'self': (_Utilities.ARGUMENT_POS, 0, None),
+        }
+    )
+
+    sample_const_signature = (
+        [
+            {'name': 'self', 'type': _Utilities.ARGUMENT_POS},
+            {'name': 'x', 'type': _Utilities.ARGUMENT_POS}
+        ],
+        {
+            'self': (_Utilities.ARGUMENT_POS, 0, None),
+            'x': (_Utilities.ARGUMENT_POS, 1, None)
         }
     )
 
@@ -57,6 +77,46 @@ class TestUtilities(TestCase):
         self.assertEqual(_Utilities.get_signature(f),
                          TestUtilities.sample_signature,
                          "extracting signature from a function")
+
+    def test_get_init_signature(self):
+        """ Tests if get_init_signature works as expected. """
+
+        class Foo(object):
+            pass
+
+        class Bar(object):
+            def __init__(self, x):
+                pass
+
+        class Baz(Bar):
+            pass
+
+        self.assertEqual(_Utilities.get_init_signature(Baz),
+                         TestUtilities.sample_const_signature)
+
+        self.assertEqual(_Utilities.get_init_signature(Foo),
+                         TestUtilities.empty_signature)
+
+        self.assertEqual(_Utilities.get_init_signature(Bar),
+                         TestUtilities.sample_const_signature)
+
+    def test_get_class_parameters(self):
+        """ Test if get_class_parameters works as expected. """
+
+        class Foo(object):
+            def __init__(self, key, value = None):
+                pass
+
+        self.assertEqual(_Utilities.get_class_parameters(Foo, 10, 10),
+                         ((None, 10), {'value': 10}),
+                         'provide kw as positional')
+        self.assertEqual(_Utilities.get_class_parameters(Foo, 10),
+                         ((None, 10), {'value': None}),
+                         'provide no kw')
+        self.assertEqual(_Utilities.get_class_parameters(Foo, value=10, key=10),
+                         ((None, 10), {'value': 10}),
+                         'provide positional as kw')
+
 
     def test_with_signature(self):
         """ Tests that the with_signature function can enforce signatures. """
@@ -331,6 +391,20 @@ class TestInheritableCaseClass(TestCase):
 
         self.assertTrue(xyz.test_p1 and xyz.test_p2,
                         "multiple-inheritance works with super()")
+
+    def test_default_argument(self):
+        """ Tests that we can have optional constructor
+        arguments within constructors. """
+
+        class Foo(CaseClass):
+            def __init__(self, key, example=None):
+                pass
+
+        self.assertEqual(Foo(0), Foo(0, None),
+                         "it is possible to omit default values")
+
+        self.assertEqual(Foo(example=None, key=1), Foo(1),
+                         "it is possible to send default values with key names")
 
 
 if __name__ == '__main__':

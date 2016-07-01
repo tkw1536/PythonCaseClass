@@ -66,6 +66,7 @@ class _Utilities(object):
         """ Extract a signature from a function.
 
         :param f: Function to extract signature from.
+
         :return: A pair of (arguments, mapping) as a list of arguments and a
         mapping from names to finding the variables.
         :rtype: tuple
@@ -111,7 +112,6 @@ class _Utilities(object):
                     {}
                 )
 
-
         # STEP 2: Merge the defaults
         defaults = kwdef.copy() if kwdef is not None else {}
 
@@ -126,7 +126,8 @@ class _Utilities(object):
         # Positionals
         for (i, a) in enumerate(pa):
             arg = {'name': a}
-            mapping[a] = (_Utilities.ARGUMENT_POS, i)
+            mapping[a] = (_Utilities.ARGUMENT_POS, i,
+                          defaults[a] if a in defaults else None)
 
             if a in defaults:
                 arg['type'] = _Utilities.ARGUMENT_KW
@@ -144,7 +145,7 @@ class _Utilities(object):
         # VARARG
         if van is not None:
             arg = {'name': van, 'type': _Utilities.VAR_POS}
-            mapping[van] = (_Utilities.VAR_POS, len(pa))
+            mapping[van] = (_Utilities.VAR_POS, len(pa), None)
 
             if van in annots:
                 arg['annot'] = annots[van]
@@ -156,7 +157,7 @@ class _Utilities(object):
             arg = {'name': a, 'type': _Utilities.ARGUMENT_KW,
                    'default': defaults[a]}
 
-            mapping[a] = (_Utilities.ARGUMENT_KW, a)
+            mapping[a] = (_Utilities.ARGUMENT_KW, a, defaults[a])
             nkwvar.append(a)
 
             if a in annots:
@@ -167,7 +168,7 @@ class _Utilities(object):
         # KW VARAGR
         if kwvan is not None:
             arg = {'name': kwvan, 'type': _Utilities.VAR_KW}
-            mapping[kwvan] = (_Utilities.VAR_KW, nkwvar)
+            mapping[kwvan] = (_Utilities.VAR_KW, nkwvar, None)
 
             if kwvan in annots:
                 arg['annot'] = annots[kwvan]
@@ -194,7 +195,7 @@ class _Utilities(object):
         name_prefix = ''.join(map(lambda arg: arg['name'], arguments)) + name
         func_name = '%sorig' % (name_prefix,)
 
-        # dictonary of default variables
+        # dictionary of default variables
         default_vars = {}
         default_var_name = '%sdefaults' % (name_prefix, )
 
@@ -243,6 +244,54 @@ class _Utilities(object):
         return wrapper
 
     @staticmethod
+    def get_init_signature(cls):
+        """ Gets the signature of an init function of a class.
+
+        :param cls: Class to get init signature of.
+        :type cls: type
+
+        :return: A pair of (arguments, mapping) as a list of arguments and a
+        mapping from names to finding the variables.
+        :rtype: tuple
+        """
+
+        # get the init method
+        init_method = \
+            _Utilities.get_method("__init__", cls.__dict__, cls.__bases__)
+
+        # HACK: Do not allow object.__init
+        if init_method is object.__init__:
+            def init_method(self):
+                return None
+
+        return _Utilities.get_signature(init_method)
+
+    @staticmethod
+    def get_class_parameters(cls, *args, **kwargs):
+        """ Substitutes parameters passed to a class with the correct defaults.
+
+        :param cls: Class parameters to clean up.
+        :type cls: type
+
+        :param args: Arguments passed to class.
+        :type args: list
+
+        :param kwargs: Keyword arguments passed to class
+        :type kwargs: dict
+
+        :return: a tuple (args, kwargs) of normal and keyword arguments.
+        :rtype: tuple
+        """
+
+        init_sig = _Utilities.get_init_signature(cls)
+
+        @_Utilities.with_signature('__init__', init_sig)
+        def get_signature(*a, **kw):
+            return a, kw
+
+        return get_signature(None, *args, **kwargs)
+
+    @staticmethod
     def get_argument_by_name(name, mapping, args, kwargs):
         """ Gets a function argument by name. """
 
@@ -251,7 +300,7 @@ class _Utilities(object):
             raise AttributeError
 
         # look up where it is
-        (tp, spec) = mapping[name]
+        (tp, spec, default) = mapping[name]
 
         # positional argument ==> return it
         if tp == _Utilities.ARGUMENT_POS:
@@ -259,6 +308,8 @@ class _Utilities(object):
                 return args[spec]
             except IndexError:
                 return kwargs[name]
+            except KeyError:
+                return default
 
         # VARARG ==> take the ones that are not others
         elif tp == _Utilities.VAR_POS:
@@ -266,7 +317,10 @@ class _Utilities(object):
 
         # KEYWORD_ARGUMENTS ==> return it.
         elif tp == _Utilities.ARGUMENT_KW:
-            return kwargs[spec]
+            try:
+                return kwargs[spec]
+            except KeyError:
+                return default
 
         # KWVARARG ==> remove all the others.
         elif tp == _Utilities.VAR_KW:
@@ -434,7 +488,7 @@ class CaseClassMeta(type):
         cval = CaseClassMeta.instance_values[cls]
 
         # key we will use for this instance.
-        key = (args, kwargs)
+        key = _Utilities.get_class_parameters(cls, *args, **kwargs)
 
         # try and return an existing instance.
         try:
@@ -556,14 +610,8 @@ class CaseClass(_CaseClass):
         # create a new instance
         inst = super(CaseClass, cls).__new__(cls)
 
-        init = _Utilities.get_method("__init__", inst.__class__.__dict__,
-                              inst.__class__.__bases__)
-
-        # to allow better singleton
-        if init is object.__init__:
-            init = lambda self: None
-
-        init_sig = _Utilities.get_signature(init)
+        # get the init signature
+        init_sig = _Utilities.get_init_signature(inst.__class__)
 
         # Name of the class
         inst.__name = inst.__class__.__name__
