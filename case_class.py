@@ -613,6 +613,13 @@ class CaseClass(_CaseClass):
         # get the init signature
         init_sig = _Utilities.get_init_signature(inst.__class__)
 
+        # cleanup the arguments
+        (cargs, kwcargs) = _Utilities.\
+            get_class_parameters(inst.__class__, *args, **kwargs)
+
+        # HACK: remove the first element
+        cargs = cargs[1:]
+
         # Name of the class
         inst.__name = inst.__class__.__name__
 
@@ -620,10 +627,10 @@ class CaseClass(_CaseClass):
         inst.__init_sig = init_sig
 
         # The arguments given to this case class
-        inst.__args = list(args)
+        inst.__args = list(cargs)
 
         # The keyword arguments given to this case class
-        inst.__kwargs = kwargs
+        inst.__kwargs = kwcargs
 
         # and return the instance
         return inst

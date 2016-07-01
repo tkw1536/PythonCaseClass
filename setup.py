@@ -7,7 +7,7 @@ def read(fname):
 
 setup(
     name="case_class",
-    version="0.0.6",
+    version="0.0.7",
 
     url="https://github.com/tkw1536/PythonCaseClass",
     author="Tom Wiesing",
