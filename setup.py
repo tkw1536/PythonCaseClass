@@ -16,7 +16,7 @@ setup(
 
     py_modules=['case_class', 'case_class.case_class', 'case_class.clsutils',
                 'case_class.exceptions', 'case_class.signature',
-                'case_class.utils'],
+                'case_class.utils', 'case_class.extractor'],
 
     description=("Scala-like CaseClasses for Python"),
     long_description=read('README.rst'),

@@ -28,3 +28,31 @@ class TestUtils(TestCase):
 
         self.assertEqual(local_vars['x'], local_vars_after['x'], "kept x")
         self.assertEqual(local_vars['y'], local_vars_after['y'], "set y")
+
+    def test_is_string(self):
+        """ Tests that the is_string method works properly. """
+
+        self.assertTrue(utils.is_string("hello world"), "normal string is a "
+                                                        "string")
+        self.assertTrue(utils.is_string('hello world'), "single char string "
+                                                        "is a string")
+        self.assertTrue(utils.is_string("""A docstring"""), "docstring is a "
+                                                            "string")
+        self.assertFalse(utils.is_string(1), "Number is not a string")
+        self.assertFalse(utils.is_string(dict()), "Dictionary is not a string")
+
+    def test_is_lambda(self):
+        """ Tests that the is_lambda method works properly. """
+
+        class C(object):
+            def __call__(self):
+                return False
+
+        def f():
+            return 1
+
+        self.assertTrue(utils.is_lambda(lambda q:q), "Lambda function is a "
+                                                     "lambda function")
+        self.assertFalse(utils.is_lambda(f), "Normal function is not a lambda")
+        self.assertFalse(utils.is_lambda(C), "Callable function is not a "
+                                             "lambda")

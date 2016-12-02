@@ -208,6 +208,16 @@ class DoubleArgumentValue(AppliedSignatureException):
         return self.__name
 
 
+class ExtractorException(CaseClassException):
+    """ Common base class related to all extractors. """
+    pass
+
+
+class ExtractorDoesNotMatch(ExtractorException):
+    """ raised when an extractor does not match a certain pattern. """
+    pass
+
+
 __all__ = ["CaseClassException", "NotInstantiableClassException",
            "NotInstantiableAbstractCaseClassException",
            "NoCaseToCaseInheritanceException", "SignatureException",
