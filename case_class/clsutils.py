@@ -7,7 +7,7 @@ Copyright (c) 2016 Tom Wiesing -- licensed under MIT, see LICENSE
 from . import signature
 
 
-def get_method(name, attrs, bases):
+def get_method(name, attrs, bases, exclude=None):
     """ Gets a method of a class by name.
 
     :param name: Name of method to get.
@@ -19,8 +19,14 @@ def get_method(name, attrs, bases):
     :param bases: Bases for the class to use for lookup.
     :type bases: list
 
+    :param exclude: Iterable of bases to exclude from search.
+    :type exclude: list
+
     :return: The class method or None
     """
+
+    if exclude is None:
+        exclude = []
 
     # If the method is present return it directly.
     if name in attrs:
@@ -28,10 +34,13 @@ def get_method(name, attrs, bases):
 
     # Try to find the method one by one
     for b in bases:
-        sub_method = get_method(name, b.__dict__, b.__bases__)
+        sub_method = get_method(name, b.__dict__, b.__bases__, exclude=exclude)
 
         if sub_method is not None:
-            return sub_method
+            if b in exclude:
+                return None
+            else:
+                return sub_method
 
     # else return None
     return None
@@ -47,10 +56,11 @@ def get_init_signature(cls):
     """
 
     # get the init method
-    init_method = get_method("__init__", cls.__dict__, cls.__bases__)
+    init_method = get_method("__init__", cls.__dict__, cls.__bases__,
+                             exclude=[object])
 
-    # HACK: Do not allow object.__init
-    if init_method is object.__init__:
+    # If it is the objeczt init method, return it
+    if init_method is None:
         def init_method(self):
             return None
 

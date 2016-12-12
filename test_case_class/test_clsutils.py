@@ -31,6 +31,15 @@ class TestUtils(TestCase):
             clsutils.get_method('f', Test.__dict__, Test.__bases__) is
             Test.__dict__['f'], 'get method of class')
 
+        self.assertTrue(
+            clsutils.get_method('g', Test2.__dict__, Test2.__bases__) is
+            None, 'get non-existent method of class')
+
+        self.assertTrue(
+            clsutils.get_method('f', Test2.__dict__, Test2.__bases__,
+                                exclude=[Test]) is
+            None, 'exclude class to get method from')
+
     def test_get_init_signature(self):
         """ Tests if get_init_signature works as expected. """
 
